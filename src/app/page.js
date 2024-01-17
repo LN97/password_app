@@ -1,6 +1,9 @@
 import Image from 'next/image'
 
 export default function Home() {
+  // make server api calls that get rendered in the server.
+  // whereas a react app is rendered on the client. 
+  // Server side rendering (nextjs) vs client side rendering ( react spa ).
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
