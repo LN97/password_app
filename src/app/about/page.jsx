@@ -1,8 +1,8 @@
-import DataDisplay from "./components/displayData"
+import DataDisplay from "./components/client.displayData"
 
 // we annot use react function like useState or useEffect in this page. because react is client side. this is server-side.
 async function getData() {
-    const res = await fetch('http://localhost:3000/api/hello')
+    const res = await fetch('http://localhost:3000/api/hello', { cache: 'force-cache' } )
     // The return value is *not* serialized
     // You can return Date, Map, Set, etc.
    
@@ -20,7 +20,8 @@ export default async function AboutPage ( ) {
     // can mix our auth with our frontend render because this is done on the server side.
 
     // server side api call. its invoked before the user even sees the page render.
-    const data = await getData()
+    const passwords = await getData()
+    console.log( passwords )
 
     // useEffect
         // await getData to my useState in order to render, edit and delete. atm, we just render.
@@ -28,7 +29,7 @@ export default async function AboutPage ( ) {
     return (
         <div>
             about page
-            <DataDisplay initialstate={ data.message } />
+            <DataDisplay initialstate={ passwords.data } />
         </div>
     )
 }

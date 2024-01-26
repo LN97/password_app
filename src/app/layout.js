@@ -1,6 +1,9 @@
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
+import { ClerkProvider } from '@clerk/nextjs'
+import UserAuthBar from './auth/userAuthBar';
 import './globals.css'
+
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -11,26 +14,29 @@ export const metadata = {
 
 const links = [
     { route: '/about' , name: 'About' }
-]
+];
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <header>
-            app name 
-            <nav>
-                <ul>
-                    { links.map( ( link ) => 
-                        <li>
-                            <Link href={ link.route }> { link.name } </Link>
-                        </li>
-                    )}
-                </ul>
-            </nav>
-        </header>
-        {children}
-        </body>
-    </html>
+    <ClerkProvider>
+        <html lang="en">
+        <body className={inter.className}>
+          <header>
+              app name 
+              <nav>
+                  <ul>
+                      { links.map( ( link ) => 
+                          <li>
+                              <Link href={ link.route }> { link.name } </Link>
+                          </li>
+                      )}
+                  </ul>
+              </nav>
+             <UserAuthBar />
+          </header>
+          {children}
+          </body>
+      </html>
+    </ClerkProvider>
   )
 }
