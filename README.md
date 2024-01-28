@@ -39,6 +39,10 @@ what else to learn
  |----------|-------------|---------|
  | DATABASE_URL | for db  | '
 DATABASE_URL=mongodb+srv://{username}:uJw2Ds98qAddkSMG@{cluster}.1sxfvwd.mongodb.net/{dbName}?retryWrites=true&w=majority"
+
+DATABASE_URL=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY"
  
  ### db setup.
  1. go to atlas.

@@ -1,9 +1,9 @@
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { ClerkProvider } from '@clerk/nextjs'
-import UserAuthBar from './auth/userAuthBar';
 import './globals.css'
 
+import DashboardLayout from './dashboard/dashboard'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,21 +21,10 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
         <html lang="en">
         <body className={inter.className}>
-          <header>
-              app name 
-              <nav>
-                  <ul>
-                      { links.map( ( link ) => 
-                          <li>
-                              <Link href={ link.route }> { link.name } </Link>
-                          </li>
-                      )}
-                  </ul>
-              </nav>
-             <UserAuthBar />
-          </header>
-          {children}
-          </body>
+            <DashboardLayout>
+                { children }
+            </DashboardLayout>
+         </body>
       </html>
     </ClerkProvider>
   )

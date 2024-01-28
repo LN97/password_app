@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { getAllPasswords } from '../db_queries/passwords/model.queries.js';
+import { getAllPasswords } from '../../db_queries/query.passwords.js';
 
 
 // server rendered page.

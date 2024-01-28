@@ -7,8 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model passwords {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  associated String
-  password   String
+model Passwords {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  associated  String
+  password    String
+  status      String
+  lastUsed    DateTime?
+  categoryIds String[]
+  userId      String
+}
+
+model Categories {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
 }
