@@ -9,16 +9,11 @@ datasource db {
 
 model Passwords {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  associated  String
+  associated  Json  
+  username    String
   password    String
-  status      String
+  status      Boolean @default(true)
   lastUsed    DateTime?
   categoryIds String[]
   userId      String
-}
-
-model Categories {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
 }

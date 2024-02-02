@@ -1,8 +1,22 @@
 import prisma from '../../prisma/client';
+import bcrypt from 'bcrypt';
+const saltRounds = 10; // Adjust saltRounds as necessary
 
 // Create a new password
-export async function createPassword(data) {
-  return await prisma.passwords.create({ data });
+export async function createPassword({ username, password, categoryIds, userId , associated }) {
+  // encrypt password using bcrypt..
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+  const newPassword = await prisma.passwords.create({
+    data: {
+        username,
+        password: hashedPassword,
+        categoryIds,
+        userId,
+        associated
+    }
+  });
+  return newPassword;
 }
 
 // Retrieve all passwords
