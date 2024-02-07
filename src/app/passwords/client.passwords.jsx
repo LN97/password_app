@@ -1,10 +1,14 @@
 'use client'
 import { Table,TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableRown  } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchpasswords, addPassword } from "./actions";
 import Slideover from "@/components/tailwind/slideOver";
 import { Input } from "@/components/ui/input";
+import { buttonVariants } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
+ 
+// added
 
 // // primitve ( can copy i believe ... )
 // let number = 5;
@@ -54,16 +58,136 @@ function AddPasword ( { updatePasswordsState } ) {
         }
     }
 
+    function Password() {
+        const passwordInputRef = useRef(null);
+        const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength
+    
+        function generateStrongPassword(length = 12) {
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]:;<>,.?~";
+            let password = "";
+          
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * charset.length);
+                password += charset[randomIndex];
+            }
+            console.log(password);
+            passwordInputRef.current.value = password;
+            checkPasswordStrength(password); // Update strength when generating a new password
+        }
+    
+        function checkPasswordStrength(password) {
+            // Define criteria
+            const minLength = 8; // Minimum length requirement
+          
+            // Helper functions to check individual criteria
+            function hasUppercase() {
+                return /[A-Z]/.test(password);
+            }
+          
+            function hasLowercase() {
+                return /[a-z]/.test(password);
+            }
+          
+            function hasNumbers() {
+                return /\d/.test(password);
+            }
+          
+            function hasSpecialChars() {
+                return /[!@#$%^&*()_+{}\[\]:;<>,.?~]/.test(password);
+            }
+          
+            function hasCommonWords() {
+                return /(password|123456|qwerty)/i.test(password);
+            }
+          
+            // Calculate strength score based on criteria met
+            function calculateStrengthScore() {
+                let strength = 0;
+          
+                if (password.length >= minLength) {
+                    strength += 1;
+                }
+          
+                if (hasUppercase()) {
+                    strength += 1;
+                }
+          
+                if (hasLowercase()) {
+                    strength += 1;
+                }
+          
+                if (hasNumbers()) {
+                    strength += 1;
+                }
+          
+                if (hasSpecialChars()) {
+                    strength += 1;
+                }
+          
+                if (!hasCommonWords()) {
+                    strength += 1;
+                }
+          
+                return strength;
+            }
+          
+            const strengthScore = calculateStrengthScore();
+            setPasswordStrength(strengthScore); // Update the state with the new strength score
+        }
+    
+        function handleInputChange(e) {
+            let inputVal = e.target.value;
+            checkPasswordStrength(inputVal); // Check and update strength on input change
+        }
+    
+        // Define the bars with their minimum score for changing color
+        const strengthBars = [
+            { id: 1, minScore: 1 },
+            { id: 2, minScore: 2 },
+            { id: 3, minScore: 4 }, // Adjusted score for the third bar
+            { id: 4, minScore: 6 }, // Adjusted score for the last bar
+        ];
+    
+        // Tailwind color classes for different strength levels
+        const strengthColors = ["bg-gray-300", "bg-red-600", "bg-red-500", "bg-green-300", "bg-green-500"];
+    
+        return (
+            <>
+                <div className="flex my-2 items-center">
+                    <input className="p-2 border border-gray-300 flex-grow" type="text" name="password" placeholder="password" ref={passwordInputRef}
+                        onChange={handleInputChange} 
+                    />
+                    <div onClick={() => generateStrongPassword()} className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                        Generate
+                    </div>
+                </div>
+                <Slider
+      defaultValue={[50]}
+      max={100}
+      step={1}
+    />
+                <div className="flex mt-2">
+                    {strengthBars.map((bar) => (
+                        <div key={bar.id} className={`w-1/4 h-2 mx-1 ${passwordStrength >= bar.minScore ? strengthColors[bar.id] : 'bg-gray-300'}`}></div>
+                    ))}
+                </div>
+            </>
+        );
+    }
+    
+
+
+
     return (
         <>
             <Button onClick={ () => togglePasswordSlidable( true )}> Generate new Password </Button>    
             <Slideover state={ createPassword } action={ togglePasswordSlidable }>
                <form onSubmit={ handleSubmit }>
                     Add a password.
-                    <Input type="text" name="username"    placeholder={'username'} />
-                    <Input type="text" name="password"    placeholder={'password'} />
-                    <Input type="text" name="websiteName" placeholder={'website name'} />
-                    <Input type="text" name="websiteUrl"  placeholder={'website url'} />
+                    <Input className="my-2" type="text" name="username"    placeholder={'username'} />
+                    <Password />
+                    <Input className="my-2" type="text" name="websiteName" placeholder={'website name'} />
+                    <Input className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} />
 
                     { categories.map( ( category ) => 
                         <Button variant="outline"> { category } </Button>
@@ -135,7 +259,7 @@ export default function PasswordsTable ( ) {
                             <TableCell>
                                last used
                             </TableCell>
-                            
+
                             <TableCell className="text-right">
                                 <Button className={ `${ each.status ? 'bg-blue-900' : 'bg-red-800'}` }> { each.status ? 'active' : 'inactive'} </Button>
                             </TableCell>
