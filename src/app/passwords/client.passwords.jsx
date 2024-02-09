@@ -7,7 +7,16 @@ import Slideover from "@/components/tailwind/slideOver";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
- 
+import { generateStrongPassword, checkPasswordStrength } from "./functions/funcs.passwordUtils"; 
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+  } from "@/components/ui/card"
+  
 // added
 
 // // primitve ( can copy i believe ... )
@@ -61,83 +70,22 @@ function AddPasword ( { updatePasswordsState } ) {
     function Password() {
         const passwordInputRef = useRef(null);
         const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength
-    
-        function generateStrongPassword(length = 12) {
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]:;<>,.?~";
-            let password = "";
-          
-            for (let i = 0; i < length; i++) {
-                const randomIndex = Math.floor(Math.random() * charset.length);
-                password += charset[randomIndex];
-            }
-            console.log(password);
-            passwordInputRef.current.value = password;
-            checkPasswordStrength(password); // Update strength when generating a new password
-        }
-    
-        function checkPasswordStrength(password) {
-            // Define criteria
-            const minLength = 8; // Minimum length requirement
-          
-            // Helper functions to check individual criteria
-            function hasUppercase() {
-                return /[A-Z]/.test(password);
-            }
-          
-            function hasLowercase() {
-                return /[a-z]/.test(password);
-            }
-          
-            function hasNumbers() {
-                return /\d/.test(password);
-            }
-          
-            function hasSpecialChars() {
-                return /[!@#$%^&*()_+{}\[\]:;<>,.?~]/.test(password);
-            }
-          
-            function hasCommonWords() {
-                return /(password|123456|qwerty)/i.test(password);
-            }
-          
-            // Calculate strength score based on criteria met
-            function calculateStrengthScore() {
-                let strength = 0;
-          
-                if (password.length >= minLength) {
-                    strength += 1;
-                }
-          
-                if (hasUppercase()) {
-                    strength += 1;
-                }
-          
-                if (hasLowercase()) {
-                    strength += 1;
-                }
-          
-                if (hasNumbers()) {
-                    strength += 1;
-                }
-          
-                if (hasSpecialChars()) {
-                    strength += 1;
-                }
-          
-                if (!hasCommonWords()) {
-                    strength += 1;
-                }
-          
-                return strength;
-            }
-          
-            const strengthScore = calculateStrengthScore();
-            setPasswordStrength(strengthScore); // Update the state with the new strength score
-        }
-    
+        
+        const [ OptionpasswordStrength , OptionsSetpasswordStrength ] = useState([ 20 ])
+        const [ generationOptionsDisplay , setGenerationOptionDisplay ] = useState(false);
+
         function handleInputChange(e) {
             let inputVal = e.target.value;
-            checkPasswordStrength(inputVal); // Check and update strength on input change
+            let strenghScore = checkPasswordStrength(inputVal); // Check and update strength on input change
+            console.log( strenghScore , typeof strenghScore )
+            setPasswordStrength(strenghScore); // Update the state with the new strength score
+        }
+
+        function handlePasswordGeneration (  strenghLength ) {
+            console.log(strenghLength  )
+            setGenerationOptionDisplay( true );
+            let newPassword = generateStrongPassword(strenghLength );
+            passwordInputRef.current.value = newPassword;
         }
     
         // Define the bars with their minimum score for changing color
@@ -157,15 +105,38 @@ function AddPasword ( { updatePasswordsState } ) {
                     <input className="p-2 border border-gray-300 flex-grow" type="text" name="password" placeholder="password" ref={passwordInputRef}
                         onChange={handleInputChange} 
                     />
-                    <div onClick={() => generateStrongPassword()} className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                    <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
                         Generate
                     </div>
                 </div>
-                <Slider
-      defaultValue={[50]}
-      max={100}
-      step={1}
-    />
+
+                { generationOptionsDisplay && (
+                    <Card>
+                    <CardHeader>
+                      <CardTitle>Card Title</CardTitle>
+                      <CardDescription>Card Description</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <div> Length { `(${ OptionpasswordStrength})`} </div>
+                        <Slider
+                            min={10}
+                            max={30}
+                            step={1}
+                            value={ OptionpasswordStrength }
+                            onValueChange={ (number) => {
+                                OptionsSetpasswordStrength( number );
+                                handlePasswordGeneration( number);
+                            }}
+                        />
+                    </CardContent>
+                    <CardFooter>
+                    <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                        Generate Another Password
+                    </div>
+                    </CardFooter>
+                  </Card>
+                )}
+                
                 <div className="flex mt-2">
                     {strengthBars.map((bar) => (
                         <div key={bar.id} className={`w-1/4 h-2 mx-1 ${passwordStrength >= bar.minScore ? strengthColors[bar.id] : 'bg-gray-300'}`}></div>
