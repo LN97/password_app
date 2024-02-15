@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from "@/components/ui/toaster"
 import './globals.css'
 
 import DashboardLayout from './dashboard/dashboard'
@@ -17,12 +18,15 @@ const links = [
 ];
 
 export default function RootLayout({ children }) {
+
+ 
   return (
     <ClerkProvider>
         <html lang="en">
         <body className={inter.className}>
             <DashboardLayout>
                 { children }
+                <Toaster />
             </DashboardLayout>
          </body>
       </html>

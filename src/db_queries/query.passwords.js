@@ -5,12 +5,12 @@ const saltRounds = 10; // Adjust saltRounds as necessary
 // Create a new password
 export async function createPassword({ username, password, categoryIds, userId , associated }) {
   // encrypt password using bcrypt..
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  // const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   const newPassword = await prisma.passwords.create({
     data: {
         username,
-        password: hashedPassword,
+        password,
         categoryIds,
         userId,
         associated
@@ -20,28 +20,58 @@ export async function createPassword({ username, password, categoryIds, userId ,
 }
 
 // Retrieve all passwords
-export async function getAllPasswords() {
-  return await prisma.passwords.findMany();
+export async function getAllPasswordsByUserId( userId) {
+  return await prisma.passwords.findMany({
+      where: { userId }
+  });
 }
 
 // Retrieve a single password by ID
-async function getPasswordById(id) {
+export async function getPasswordById(id) {
   return await prisma.passwords.findUnique({
     where: { id },
   });
 }
 
 // Update a password by ID
-async function updatePasswordById(id, data) {
+export async function updatePasswordById(id, data) {
   return await prisma.passwords.update({
     where: { id },
     data,
   });
 }
 
-// Delete a password by ID
-async function deletePasswordById(id) {
-  return await prisma.passwords.delete({
+export async function deletePasswordById(id) {
+  // Delete the password by ID
+  await prisma.passwords.delete({ where: { id } });
+
+  // Fetch the updated list of passwords after deletion
+  const updatedPasswordsList = await getAllPasswords();
+  // Return the updated list
+  return updatedPasswordsList;
+}
+
+export async function togglePasswordStatus( id ) {
+  // Retrieve the current status of the password entry
+  const password = await prisma.passwords.findUnique({
     where: { id },
+    select: { status: true }, // Only fetch the status field
   });
+
+  if (!password) {
+    throw new Error('Password not found');
+  }
+
+  // Toggle the status and update the password entry
+  await prisma.passwords.update({
+    where: { id },
+    data: {
+      status: !password.status, // Set the status to its opposite
+    },
+  });
+
+   // Fetch the updated list of passwords after deletion
+   const updatedPasswordsList = await getAllPasswords();
+   // Return the updated list
+   return updatedPasswordsList;
 }

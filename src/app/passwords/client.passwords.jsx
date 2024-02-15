@@ -2,7 +2,7 @@
 import { Table,TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableRown  } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from 'react';
-import { fetchpasswords, addPassword } from "./actions";
+import { fetchpasswords, addPassword, deletePasswordUserAction, changeStatusOfPasswordAction } from "./actions";
 import Slideover from "@/components/tailwind/slideOver";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button"
@@ -16,6 +16,8 @@ import {
     CardHeader,
     CardTitle,
   } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+
   
 // added
 
@@ -74,11 +76,15 @@ function AddPasword ( { updatePasswordsState } ) {
         const [ OptionpasswordStrength , OptionsSetpasswordStrength ] = useState([ 20 ])
         const [ generationOptionsDisplay , setGenerationOptionDisplay ] = useState(false);
 
-        function handleInputChange(e) {
-            let inputVal = e.target.value;
-            let strenghScore = checkPasswordStrength(inputVal); // Check and update strength on input change
+        function handlesStrengthofPassword( value ) {
+            let strenghScore = checkPasswordStrength( value ); // Check and update strength on input change
             console.log( strenghScore , typeof strenghScore )
             setPasswordStrength(strenghScore); // Update the state with the new strength score
+        }
+
+        function handleInputChange(e) {
+            let inputVal = e.target.value;
+            handlesStrengthofPassword( inputVal );
         }
 
         function handlePasswordGeneration (  strenghLength ) {
@@ -86,6 +92,7 @@ function AddPasword ( { updatePasswordsState } ) {
             setGenerationOptionDisplay( true );
             let newPassword = generateStrongPassword(strenghLength );
             passwordInputRef.current.value = newPassword;
+            handlesStrengthofPassword( newPassword );
         }
     
         // Define the bars with their minimum score for changing color
@@ -102,9 +109,13 @@ function AddPasword ( { updatePasswordsState } ) {
         return (
             <>
                 <div className="flex my-2 items-center">
-                    <input className="p-2 border border-gray-300 flex-grow" type="text" name="password" placeholder="password" ref={passwordInputRef}
+                    <div className="p-2 border border-gray-300 flex-grow">
+                        <input className="p-2 border-none" type="password" name="password" placeholder="password" ref={passwordInputRef}
                         onChange={handleInputChange} 
-                    />
+                        />
+                        <p> Reveal </p>
+                    </div>
+                  
                     <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
                         Generate
                     </div>
@@ -113,8 +124,8 @@ function AddPasword ( { updatePasswordsState } ) {
                 { generationOptionsDisplay && (
                     <Card>
                     <CardHeader>
-                      <CardTitle>Card Title</CardTitle>
-                      <CardDescription>Card Description</CardDescription>
+                      <CardTitle> Generate a Password </CardTitle>
+                      <CardDescription> generate a password that includes lower case, uppercase, special characters and numbers. </CardDescription>
                     </CardHeader>
                     <CardContent>
                        <div> Length { `(${ OptionpasswordStrength})`} </div>
@@ -130,7 +141,7 @@ function AddPasword ( { updatePasswordsState } ) {
                         />
                     </CardContent>
                     <CardFooter>
-                    <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                    <div onClick={ () => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
                         Generate Another Password
                     </div>
                     </CardFooter>
@@ -145,9 +156,6 @@ function AddPasword ( { updatePasswordsState } ) {
             </>
         );
     }
-    
-
-
 
     return (
         <>
@@ -179,13 +187,39 @@ function AddPasword ( { updatePasswordsState } ) {
     )
 }
 
+
 export default function PasswordsTable ( ) {
+
     const [ passwords , setPasswords ] = useState([]);
+    
+
+    const { toast } = useToast()
+
 
     const updatePasswordState = ( state ) => {
         let passwordsCopy = [...passwords ];
         passwordsCopy.push( state );
         setPasswords( passwordsCopy )
+    }
+
+    async function deletePassword ( id ) {
+        console.log( id );
+        let passwords = await deletePasswordUserAction( id );
+        setPasswords( passwords );
+    }
+
+    async function handleStatusOfPassword ( id ) {
+        let passwords = await changeStatusOfPasswordAction( id );
+        setPasswords( passwords );
+    }
+
+    async function copyPasswordToClipboard ( password ) {
+        await navigator.clipboard.writeText( password );
+        toast({
+            title: 'Clipboard',
+            description: `Copied password of ${ password } to clipboard`,
+            duration: 4500
+         });
     }
   
     useEffect( ( ) => {
@@ -204,12 +238,13 @@ export default function PasswordsTable ( ) {
                 <TableCaption>A List of your used Passwords </TableCaption>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Used In:  </TableHead>
+                        <TableHead> Used In:  </TableHead>
                         <TableHead> Username </TableHead>
                         <TableHead> Password </TableHead>
                         <TableHead> Last used </TableHead>
-                        <TableHead> Status </TableHead>
+                        <TableHead> Status    </TableHead>
                         <TableHead className="text-right"> Category </TableHead>
+                        <TableHead className="text-right"> </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,8 +258,8 @@ export default function PasswordsTable ( ) {
                                 { each.username }
                             </TableCell>
                          
-                            <TableCell className="text-right">
-                                show password
+                            <TableCell className="text-right" onClick={ ( ) => copyPasswordToClipboard ( each.password ) }>
+                                copy password
                             </TableCell>   
 
                             <TableCell>
@@ -232,13 +267,20 @@ export default function PasswordsTable ( ) {
                             </TableCell>
 
                             <TableCell className="text-right">
-                                <Button className={ `${ each.status ? 'bg-blue-900' : 'bg-red-800'}` }> { each.status ? 'active' : 'inactive'} </Button>
+                                <Button onClick={ ( ) => handleStatusOfPassword( each.id )}
+                                className={ `${ each.status ? 'bg-blue-900' : 'bg-red-800'}` }> { each.status ? 'active' : 'inactive'} </Button>
                             </TableCell>
                             
                             <TableCell className="text-right">
                                 { each.categoryIds.map( ( category , index ) => 
                                     <Button key={ index } variant="outline"> { category } </Button>
                                 )}
+                            </TableCell>
+
+                            <TableCell className="text-right" onClick={ ( ) => {
+                                deletePassword( each.id )
+                            }}>
+                                delete
                             </TableCell>
                         </TableRow>
                     )}
