@@ -6,7 +6,7 @@ export async function fetchpasswords ( ) {
     // get current logged userId.
     const { id } = await currentUser();
     if ( !id ) return;
-    const passwords = await getAllPasswordsByUserId( id );
+    const passwords = await getAllPasswordsByUserId( );
     return passwords;
 }
 

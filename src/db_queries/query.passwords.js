@@ -1,6 +1,27 @@
 import prisma from '../../prisma/client';
 import bcrypt from 'bcrypt';
-const saltRounds = 10; // Adjust saltRounds as necessary
+const saltRounds = 10; // Adjust saltRounds as necessary..
+import { currentUser } from '@clerk/nextjs';
+
+
+// Retrieve all passwords
+export async function getAllPasswordsByUserId( ) {
+  // get current logged userId.
+  const { id } = await currentUser();
+  if ( !id ) return;
+
+  return await prisma.passwords.findMany({
+      where: { userId: id }
+  });
+}
+
+// Retrieve a single password by ID
+export async function getPasswordById(id) {
+  return await prisma.passwords.findUnique({
+    where: { id },
+  });
+}
+
 
 // Create a new password
 export async function createPassword({ username, password, categoryIds, userId , associated }) {
@@ -19,19 +40,6 @@ export async function createPassword({ username, password, categoryIds, userId ,
   return newPassword;
 }
 
-// Retrieve all passwords
-export async function getAllPasswordsByUserId( userId) {
-  return await prisma.passwords.findMany({
-      where: { userId }
-  });
-}
-
-// Retrieve a single password by ID
-export async function getPasswordById(id) {
-  return await prisma.passwords.findUnique({
-    where: { id },
-  });
-}
 
 // Update a password by ID
 export async function updatePasswordById(id, data) {
@@ -46,7 +54,7 @@ export async function deletePasswordById(id) {
   await prisma.passwords.delete({ where: { id } });
 
   // Fetch the updated list of passwords after deletion
-  const updatedPasswordsList = await getAllPasswords();
+  const updatedPasswordsList = await getAllPasswordsByUserId();
   // Return the updated list
   return updatedPasswordsList;
 }
@@ -71,7 +79,7 @@ export async function togglePasswordStatus( id ) {
   });
 
    // Fetch the updated list of passwords after deletion
-   const updatedPasswordsList = await getAllPasswords();
+   const updatedPasswordsList = await getAllPasswordsByUserId();
    // Return the updated list
    return updatedPasswordsList;
 }
