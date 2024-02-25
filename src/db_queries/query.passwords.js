@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 const saltRounds = 10; // Adjust saltRounds as necessary..
 import { currentUser } from '@clerk/nextjs';
 
-
 // Retrieve all passwords
 export async function getAllPasswordsByUserId( ) {
   // get current logged userId.

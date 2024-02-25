@@ -18,7 +18,6 @@ const links = [
 ];
 
 export default function RootLayout({ children }) {
-
  
   return (
     <ClerkProvider>

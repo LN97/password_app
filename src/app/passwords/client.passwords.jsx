@@ -51,14 +51,21 @@ import { useToast } from "@/components/ui/use-toast"
 // let obj2 = obj1.name;
 // obj2.name = 'simon';
 
+// convert react inputs from grabbing the value to using state so that we can change the state when in edit mode.
 
-function AddPasword ( { updatePasswordsState } ) {
-    const [ createPassword , togglePasswordSlidable ] = useState( false );
+
+function PasswordForm ( { updatePasswordsState , edit = { state: false , password: null }} ) {
     const [ categoryDisplay , setCategoryDisplay ] = useState( false );
     const [ categories , setCategories ] = useState( [ 
         'tv' , 'film'
     ] );
     const [ newCategoryState , setNewCategory ] = useState('');
+
+    async function deletePassword(id) {
+        // Assume deletePasswordUserAction is defined elsewhere
+        let passwords = await deletePasswordUserAction(id);
+        changePasswords(passwords);
+    }
 
     const addToCategories = ( ) => {
         // deep copying vs shallow copying in js.
@@ -123,11 +130,19 @@ function AddPasword ( { updatePasswordsState } ) {
         // Tailwind color classes for different strength levels
         const strengthColors = ["bg-gray-300", "bg-red-600", "bg-red-500", "bg-green-300", "bg-green-500"];
     
+        useEffect( ( ) => {
+            if ( edit.state ) {
+                 console.log( 'edit password data' , edit.password )
+                 
+            }
+           
+        }, [edit ]);
+
         return (
             <>
                 <div className="flex my-2 items-center flex-row">
                     <div className="p-2 border border-gray-300 flex-grow flex flex-row items-center">
-                        <input className="p-2 border-none" type="password" name="password" placeholder="password" ref={passwordInputRef}
+                        <input className="p-2 border-none" type="string" name="password" placeholder="password" ref={passwordInputRef}
                         onChange={handleInputChange} 
                         />
                         <p className="mx-4 cursor-pointer"> Reveal </p>
@@ -141,13 +156,13 @@ function AddPasword ( { updatePasswordsState } ) {
                 { generationOptionsDisplay && (
                     <Card>
                     <CardHeader>
-                      <CardTitle> Generate a Password </CardTitle>
+                      <CardTitle> { edit.state ? ' Edit Password' : 'Add a password' } </CardTitle>
                       <CardDescription> generate a password that includes lower case, uppercase, special characters and numbers. </CardDescription>
                     </CardHeader>
                     <CardContent>
                        <div> Length { `(${ OptionpasswordStrength})`} </div>
                         <Slider
-                            min={10}
+                            min={8}
                             max={30}
                             step={1}
                             value={ OptionpasswordStrength }
@@ -174,41 +189,55 @@ function AddPasword ( { updatePasswordsState } ) {
         );
     }
 
+    useEffect( ( ) => {
+        if ( edit.state ) {
+             console.log( edit.password )
+        }
+       
+    }, [edit ]);
+
+
     return (
         <>
-            <Button onClick={ () => togglePasswordSlidable( true )}> Generate new Password </Button>    
-            <Slideover state={ createPassword } action={ togglePasswordSlidable }>
-               <form onSubmit={ handleSubmit }>
-                    Add a password.
-                    <Input className="my-2" type="text" name="username"    placeholder={'username'} />
-                    <Password />
-                    <Input className="my-2" type="text" name="websiteName" placeholder={'website name'} />
-                    <Input className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} />
+            <form onSubmit={ handleSubmit }>
+                { edit.state ? 'Edit the Password' : 'Create new Password'}
+                <Input className="my-2" type="text" name="username"    placeholder={'username'} />
+                <Password />
+                <Input className="my-2" type="text" name="websiteName" placeholder={'website name'} />
+                <Input className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} />
 
-                    { categories.map( ( category ) => 
-                        <Button variant="outline"> { category } </Button>
-                    )}
-                    { categoryDisplay ? (
-                       <>
-                            <Input type="text" placeholder="add a category" value={ newCategoryState } onChange={ ( e ) => setNewCategory(e.target.value )} />
-                            <Button onClick={ () => addToCategories() }> add </Button>
-                       </> 
-                    ) : (
-                        null
-                    )}
-                    <div onClick={ () => setCategoryDisplay( !categoryDisplay )}> Add a collection </div>
-                    <Button type="submit">Submit</Button>
-                </form>
-            </Slideover>
+                { categories.map( ( category ) => 
+                    <Button variant="outline"> { category } </Button>
+                )}
+                { categoryDisplay ? (
+                    <>
+                        <Input type="text" placeholder="add a category" value={ newCategoryState } onChange={ ( e ) => setNewCategory(e.target.value )} />
+                        <Button onClick={ () => addToCategories() }> add </Button>
+                    </> 
+                ) : (
+                    null
+                )}
+                <div onClick={ () => setCategoryDisplay( !categoryDisplay )}> Add a collection </div>
+                <Button type="submit">Submit</Button>
+            </form>
         </>
     )
 }
 
 
-
 export default function PasswordsTable() {
     const [passwords, setPasswords] = useState([]);
     const [sortConfig, setSortConfig] = useState({key: null, direction: 'ascending'});
+    
+    const [ createPassword , togglePasswordSlidable ] = useState( false );
+
+    const [editState, toggleEditState ] = useState( false );
+    const [editObj, setEditObj ] = useState(null);
+
+    function setEditSlideFromClick( password ) {
+        setEditObj( password );
+        toggleEditState( true )
+    }
 
     const { toast } = useToast();
 
@@ -218,11 +247,6 @@ export default function PasswordsTable() {
         setPasswords(passwordsCopy);
     };
 
-    async function deletePassword(id) {
-        // Assume deletePasswordUserAction is defined elsewhere
-        let passwords = await deletePasswordUserAction(id);
-        setPasswords(passwords);
-    }
 
     async function handleStatusOfPassword(id) {
         // Assume changeStatusOfPasswordAction is defined elsewhere
@@ -298,7 +322,10 @@ export default function PasswordsTable() {
 
     return (
         <>   
-            <AddPasword updatePasswordsState={ updatePasswordState } />
+            <Button onClick={ () => togglePasswordSlidable( true )}> Generate new Password </Button>    
+            <Slideover state={ createPassword } action={ togglePasswordSlidable }>
+                  <PasswordForm updatePasswordsState={ updatePasswordState } />
+            </Slideover>
             <Table>
                 <TableCaption>A List of your used Passwords </TableCaption>
                 <TableHeader>
@@ -343,14 +370,18 @@ export default function PasswordsTable() {
                             </TableCell>
 
                             <TableCell className="text-right" onClick={ ( ) => {
-                                deletePassword( each.id )
+                                setEditSlideFromClick( each )
                             }}>
-                                delete
+                                    edit
                             </TableCell>
                         </TableRow>
                     )}
                 </TableBody>
             </Table>
+
+            <Slideover state={ editState } action={ toggleEditState } >
+                <PasswordForm updatePasswordsState={ updatePasswordState } edit={{ state: true, password: editObj } } />
+            </Slideover>
         </>
     )
 }
