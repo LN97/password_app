@@ -42,10 +42,11 @@ export async function createPassword({ username, password, categoryIds, userId ,
 
 // Update a password by ID
 export async function updatePasswordById(id, data) {
-  return await prisma.passwords.update({
+   await prisma.passwords.update({
     where: { id },
     data,
   });
+  return await getAllPasswordsByUserId();
 }
 
 export async function deletePasswordById(id) {

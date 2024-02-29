@@ -2,10 +2,9 @@
 import { Table,TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableRown  } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from 'react';
-import { fetchpasswords, addPassword, deletePasswordUserAction, changeStatusOfPasswordAction } from "./actions";
+import { fetchpasswords, addPassword, updatePasswordRecord, deletePasswordUserAction, changeStatusOfPasswordAction } from "./actions";
 import Slideover from "@/components/tailwind/slideOver";
 import { Input } from "@/components/ui/input";
-import { buttonVariants } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { generateStrongPassword, checkPasswordStrength } from "./functions/funcs.passwordUtils"; 
 import {
@@ -56,9 +55,12 @@ import { useToast } from "@/components/ui/use-toast"
 
 function PasswordForm ( { updatePasswordsState , edit = { state: false , password: null }} ) {
     const [ categoryDisplay , setCategoryDisplay ] = useState( false );
+    const [ formData , setFormData ] = useState( {  username: '', websiteUrl: '', websiteName: '' });
+
     const [ categories , setCategories ] = useState( [ 
         'tv' , 'film'
-    ] );
+    ]);
+
     const [ newCategoryState , setNewCategory ] = useState('');
 
     async function deletePassword(id) {
@@ -80,17 +82,34 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
         event.preventDefault(); // Prevent default form submission behavior
         const formData = new FormData(event.target);
         const formProps = Object.fromEntries(formData);
+        console.log( edit.state );
         try {
-            // Call addPassword function with form data
-            const userAdded = await addPassword(categories, formProps);
-            console.log('Form submission response:', userAdded );
-            updatePasswordsState( userAdded );
-            togglePasswordSlidable( false );
+            if ( edit.state ) {
+                    const passwordsUpdated = await updatePasswordRecord( edit.password.id, categories, formProps );
+                    console.log('Form submission response:', passwordsUpdated );
+                    // updatePasswordsState( passwordsUpdated );
+        } else {
+                    // Call addPassword function with form data
+                    const passwordAdded = await addPassword(categories, formProps);
+                    console.log('Form submission response:', passwordAdded );
+                    updatePasswordsState( passwordAdded );
+            }
         } 
         catch (error) {
             console.error('Error submitting form:', error);
             // Handle error here (e.g., display an error message)
         }
+    }
+
+    const handleFormUpdate = ( e ) => {
+        let { name, value } = e.target;
+        setFormData({ ...formData , [name]: value });
+    }
+
+    const populateFormFieldsOnUpdate = ( ) => {
+        let { username , associated } = edit.password;
+        let { websiteName , websiteUrl } = associated;
+        setFormData({ username, websiteUrl, websiteName })
     }
 
     function Password() {
@@ -100,9 +119,15 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
         const [ OptionpasswordStrength , OptionsSetpasswordStrength ] = useState([ 20 ])
         const [ generationOptionsDisplay , setGenerationOptionDisplay ] = useState(false);
 
+        function populatePasswordOnEdit ( ) {
+            let oldPassword = edit.password.password;
+            passwordInputRef.current.value = oldPassword;
+            handlesStrengthofPassword( oldPassword );
+        }
+
         function handlesStrengthofPassword( value ) {
             let strenghScore = checkPasswordStrength( value ); // Check and update strength on input change
-            console.log( strenghScore , typeof strenghScore )
+            // console.log( strenghScore , typeof strenghScore )
             setPasswordStrength(strenghScore); // Update the state with the new strength score
         }
 
@@ -133,10 +158,10 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
         useEffect( ( ) => {
             if ( edit.state ) {
                  console.log( 'edit password data' , edit.password )
-                 
+                 populatePasswordOnEdit();
             }
            
-        }, [edit ]);
+        }, [ edit.state ]);
 
         return (
             <>
@@ -191,20 +216,21 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
 
     useEffect( ( ) => {
         if ( edit.state ) {
-             console.log( edit.password )
+             console.log( edit.password );
+             populateFormFieldsOnUpdate();
         }
        
-    }, [edit ]);
-
+    }, [edit.state ]);
 
     return (
         <>
-            <form onSubmit={ handleSubmit }>
+            <form onSubmit={handleSubmit }>
                 { edit.state ? 'Edit the Password' : 'Create new Password'}
-                <Input className="my-2" type="text" name="username"    placeholder={'username'} />
+                <Input value={ formData.username } className="my-2" type="text" name="username"    placeholder={'username'} onChange={handleFormUpdate} />
                 <Password />
-                <Input className="my-2" type="text" name="websiteName" placeholder={'website name'} />
-                <Input className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} />
+                <Input value={ formData.websiteName } className="my-2" type="text" name="websiteName" placeholder={'website name'} onChange={handleFormUpdate} />
+                <Input value={ formData.websiteUrl } className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} onChange={handleFormUpdate} />
+                
 
                 { categories.map( ( category ) => 
                     <Button variant="outline"> { category } </Button>
@@ -241,11 +267,16 @@ export default function PasswordsTable() {
 
     const { toast } = useToast();
 
-    const updatePasswordState = (state) => {
+    const appendPasswordState = (state) => {
         let passwordsCopy = [...passwords];
         passwordsCopy.push(state);
         setPasswords(passwordsCopy);
     };
+
+    const updatePasswordsState = (array) => {
+        let passwordsCopy = [...array];
+        setPasswords( passwordsCopy );
+    }
 
 
     async function handleStatusOfPassword(id) {
@@ -324,7 +355,7 @@ export default function PasswordsTable() {
         <>   
             <Button onClick={ () => togglePasswordSlidable( true )}> Generate new Password </Button>    
             <Slideover state={ createPassword } action={ togglePasswordSlidable }>
-                  <PasswordForm updatePasswordsState={ updatePasswordState } />
+                  <PasswordForm updatePasswordsState={ updatePasswordsState } />
             </Slideover>
             <Table>
                 <TableCaption>A List of your used Passwords </TableCaption>
@@ -380,7 +411,7 @@ export default function PasswordsTable() {
             </Table>
 
             <Slideover state={ editState } action={ toggleEditState } >
-                <PasswordForm updatePasswordsState={ updatePasswordState } edit={{ state: true, password: editObj } } />
+                <PasswordForm updatePasswordsState={ appendPasswordState } edit={{ state: true, password: editObj } } />
             </Slideover>
         </>
     )

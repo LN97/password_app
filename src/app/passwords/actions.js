@@ -1,5 +1,5 @@
 'use server'
-import { getAllPasswordsByUserId, createPassword, deletePasswordById, togglePasswordStatus } from '../../db_queries/query.passwords';
+import { getAllPasswordsByUserId, createPassword, updatePasswordById, deletePasswordById, togglePasswordStatus } from '../../db_queries/query.passwords';
 import { currentUser } from '@clerk/nextjs';
 
 export async function fetchpasswords ( ) {
@@ -19,7 +19,7 @@ export async function addPassword ( categories, formData ) {
     console.log( formData )
     const { username, password, websiteName, websiteUrl } = formData;
 
-    let createdUser = await createPassword({
+    let createdPassword = await createPassword({
         associated: {
             websiteName: websiteName , websiteUrl
         },
@@ -28,13 +28,43 @@ export async function addPassword ( categories, formData ) {
         categoryIds: categories,
         userId: id
     });
-    return createdUser;
+    return createdPassword;
 }
+
+export async function updatePasswordRecord( passwordId, categories, formData ) {
+
+    // get current logged userId.
+    const { id } = await currentUser();
+    if ( !id ) return;
+
+    try {
+        const { username, password, websiteName, websiteUrl } = formData;
+
+        console.log(passwordId, formData, categories )
+
+        const updatedPassword = await updatePasswordById( passwordId, {
+            associated: {
+                websiteName: websiteName , websiteUrl
+            },
+            username,
+            password,
+            categoryIds: categories,
+        });
+    
+        console.log('Password record updated:', updatedPassword);
+        return updatedPassword;
+    } 
+    catch (error) {
+        console.error('Error updating the password record:', error);
+        throw error; // Rethrow or handle as needed
+    }
+  }
 
 export async function deletePasswordUserAction ( id ) {
     let passwords = await deletePasswordById( id );
     return passwords;
 }
+
 
 export async function changeStatusOfPasswordAction( id ) {
     let passwords = await togglePasswordStatus( id );
