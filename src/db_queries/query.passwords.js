@@ -44,7 +44,7 @@ export async function createPassword({ username, password, categoryIds, userId ,
 export async function updatePasswordById(id, data) {
    await prisma.passwords.update({
     where: { id },
-    data,
+    data: {...data, lastUsed: new Date() },
   });
   return await getAllPasswordsByUserId();
 }

@@ -5,17 +5,10 @@ import { useState, useEffect, useRef } from 'react';
 import { fetchpasswords, addPassword, updatePasswordRecord, deletePasswordUserAction, changeStatusOfPasswordAction } from "./actions";
 import Slideover from "@/components/tailwind/slideOver";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider"
+import { Slider } from "@/components/ui/slider";
 import { generateStrongPassword, checkPasswordStrength } from "./functions/funcs.passwordUtils"; 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-  } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast";
 
 
 // function PasswordInput ( ) {
@@ -33,7 +26,6 @@ import { useToast } from "@/components/ui/use-toast"
 //         </div>
 //     )
 // }
-
   
 // added
 
@@ -53,7 +45,109 @@ import { useToast } from "@/components/ui/use-toast"
 // convert react inputs from grabbing the value to using state so that we can change the state when in edit mode.
 
 
-function PasswordForm ( { updatePasswordsState , edit = { state: false , password: null }} ) {
+function Password( { isInEdit, oldPassword } ) {
+    const passwordInputRef = useRef(null);
+    const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength.
+    const [password, setPassword] = useState('');
+    
+    const [ OptionpasswordStrength , OptionsSetpasswordStrength ] = useState([ 20 ])
+    const [ generationOptionsDisplay , setGenerationOptionDisplay ] = useState(false);
+
+    function populatePasswordOnEdit ( ) {
+        setPassword( oldPassword );
+        handlesStrengthofPassword( oldPassword );
+    }
+
+    function handlesStrengthofPassword( value ) {
+        let strenghScore = checkPasswordStrength( value ); // Check and update strength on input change
+        setPasswordStrength(strenghScore); // Update the state with the new strength score
+    }
+
+    function handleInputChange(e) {
+        let inputVal = e.target.value;
+        setPassword( inputVal );
+        handlesStrengthofPassword( inputVal );
+    }
+
+    function handlePasswordGeneration (  strenghLength ) {
+        console.log(strenghLength  )
+        setGenerationOptionDisplay( true );
+        let newPassword = generateStrongPassword(strenghLength );
+        passwordInputRef.current.value = newPassword;
+        handlesStrengthofPassword( newPassword );
+    }
+
+    // Define the bars with their minimum score for changing color
+    const strengthBars = [
+        { id: 1, minScore: 1 },
+        { id: 2, minScore: 2 },
+        { id: 3, minScore: 4 }, // Adjusted score for the third bar
+        { id: 4, minScore: 6 }, // Adjusted score for the last bar
+    ];
+
+    // Tailwind color classes for different strength levels
+    const strengthColors = ["bg-gray-300", "bg-red-600", "bg-red-500", "bg-green-300", "bg-green-500"];
+
+    useEffect( ( ) => {
+        if ( isInEdit && oldPassword ) {
+             console.log( 'edit password data' , oldPassword );
+             populatePasswordOnEdit();
+        }
+    }, [] );
+
+    return (
+        <>
+            <div className="flex my-2 items-center flex-row">
+                <div className="p-2 border border-gray-300 flex-grow flex flex-row items-center">
+                    <input className="p-2 border-none" type="string" name="password" placeholder="password" ref={passwordInputRef}
+                    onChange={handleInputChange} value={ password }
+                    />
+                    <p className="mx-4 cursor-pointer"> Reveal </p>
+                </div>
+              
+                <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                    Generate
+                </div>
+            </div>
+
+            { generationOptionsDisplay && (
+                <Card>
+                <CardHeader>
+                  <CardTitle> { edit.state ? ' Edit Password' : 'Add a password' } </CardTitle>
+                  <CardDescription> generate a password that includes lower case, uppercase, special characters and numbers. </CardDescription>
+                </CardHeader>
+                <CardContent>
+                   <div> Length { `(${ OptionpasswordStrength})`} </div>
+                    <Slider
+                        min={8}
+                        max={30}
+                        step={1}
+                        value={ OptionpasswordStrength }
+                        onValueChange={ (number) => {
+                            OptionsSetpasswordStrength( number );
+                            handlePasswordGeneration( number);
+                        }}
+                    />
+                </CardContent>
+                <CardFooter>
+                <div onClick={ () => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
+                    Generate Another Password
+                </div>
+                </CardFooter>
+              </Card>
+            )}
+            
+            <div className="flex mt-2">
+                {strengthBars.map((bar) => (
+                    <div key={bar.id} className={`w-1/4 h-2 mx-1 ${passwordStrength >= bar.minScore ? strengthColors[bar.id] : 'bg-gray-300'}`}></div>
+                ))}
+            </div>
+        </>
+    );
+}
+
+
+function PasswordForm ( { updatePasswordsState , edit = { state: false , password: null } } ) {
     const [ categoryDisplay , setCategoryDisplay ] = useState( false );
     const [ formData , setFormData ] = useState( {  username: '', websiteUrl: '', websiteName: '' });
 
@@ -87,7 +181,7 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
             if ( edit.state ) {
                     const passwordsUpdated = await updatePasswordRecord( edit.password.id, categories, formProps );
                     console.log('Form submission response:', passwordsUpdated );
-                    // updatePasswordsState( passwordsUpdated );
+                    updatePasswordsState( passwordsUpdated );
         } else {
                     // Call addPassword function with form data
                     const passwordAdded = await addPassword(categories, formProps);
@@ -112,122 +206,20 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
         setFormData({ username, websiteUrl, websiteName })
     }
 
-    function Password() {
-        const passwordInputRef = useRef(null);
-        const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength
-        
-        const [ OptionpasswordStrength , OptionsSetpasswordStrength ] = useState([ 20 ])
-        const [ generationOptionsDisplay , setGenerationOptionDisplay ] = useState(false);
-
-        function populatePasswordOnEdit ( ) {
-            let oldPassword = edit.password.password;
-            passwordInputRef.current.value = oldPassword;
-            handlesStrengthofPassword( oldPassword );
-        }
-
-        function handlesStrengthofPassword( value ) {
-            let strenghScore = checkPasswordStrength( value ); // Check and update strength on input change
-            // console.log( strenghScore , typeof strenghScore )
-            setPasswordStrength(strenghScore); // Update the state with the new strength score
-        }
-
-        function handleInputChange(e) {
-            let inputVal = e.target.value;
-            handlesStrengthofPassword( inputVal );
-        }
-
-        function handlePasswordGeneration (  strenghLength ) {
-            console.log(strenghLength  )
-            setGenerationOptionDisplay( true );
-            let newPassword = generateStrongPassword(strenghLength );
-            passwordInputRef.current.value = newPassword;
-            handlesStrengthofPassword( newPassword );
-        }
-    
-        // Define the bars with their minimum score for changing color
-        const strengthBars = [
-            { id: 1, minScore: 1 },
-            { id: 2, minScore: 2 },
-            { id: 3, minScore: 4 }, // Adjusted score for the third bar
-            { id: 4, minScore: 6 }, // Adjusted score for the last bar
-        ];
-    
-        // Tailwind color classes for different strength levels
-        const strengthColors = ["bg-gray-300", "bg-red-600", "bg-red-500", "bg-green-300", "bg-green-500"];
-    
-        useEffect( ( ) => {
-            if ( edit.state ) {
-                 console.log( 'edit password data' , edit.password )
-                 populatePasswordOnEdit();
-            }
-           
-        }, [ edit.state ]);
-
-        return (
-            <>
-                <div className="flex my-2 items-center flex-row">
-                    <div className="p-2 border border-gray-300 flex-grow flex flex-row items-center">
-                        <input className="p-2 border-none" type="string" name="password" placeholder="password" ref={passwordInputRef}
-                        onChange={handleInputChange} 
-                        />
-                        <p className="mx-4 cursor-pointer"> Reveal </p>
-                    </div>
-                  
-                    <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
-                        Generate
-                    </div>
-                </div>
-
-                { generationOptionsDisplay && (
-                    <Card>
-                    <CardHeader>
-                      <CardTitle> { edit.state ? ' Edit Password' : 'Add a password' } </CardTitle>
-                      <CardDescription> generate a password that includes lower case, uppercase, special characters and numbers. </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <div> Length { `(${ OptionpasswordStrength})`} </div>
-                        <Slider
-                            min={8}
-                            max={30}
-                            step={1}
-                            value={ OptionpasswordStrength }
-                            onValueChange={ (number) => {
-                                OptionsSetpasswordStrength( number );
-                                handlePasswordGeneration( number);
-                            }}
-                        />
-                    </CardContent>
-                    <CardFooter>
-                    <div onClick={ () => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">
-                        Generate Another Password
-                    </div>
-                    </CardFooter>
-                  </Card>
-                )}
-                
-                <div className="flex mt-2">
-                    {strengthBars.map((bar) => (
-                        <div key={bar.id} className={`w-1/4 h-2 mx-1 ${passwordStrength >= bar.minScore ? strengthColors[bar.id] : 'bg-gray-300'}`}></div>
-                    ))}
-                </div>
-            </>
-        );
-    }
-
     useEffect( ( ) => {
         if ( edit.state ) {
              console.log( edit.password );
              populateFormFieldsOnUpdate();
         }
        
-    }, [edit.state ]);
+    }, [ edit.state ]);
 
     return (
         <>
             <form onSubmit={handleSubmit }>
                 { edit.state ? 'Edit the Password' : 'Create new Password'}
                 <Input value={ formData.username } className="my-2" type="text" name="username"    placeholder={'username'} onChange={handleFormUpdate} />
-                <Password />
+                <Password isInEdit={ edit.state } oldPassword={ edit.state ? edit.password.password : ''  }/>
                 <Input value={ formData.websiteName } className="my-2" type="text" name="websiteName" placeholder={'website name'} onChange={handleFormUpdate} />
                 <Input value={ formData.websiteUrl } className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} onChange={handleFormUpdate} />
                 
@@ -271,13 +263,24 @@ export default function PasswordsTable() {
         let passwordsCopy = [...passwords];
         passwordsCopy.push(state);
         setPasswords(passwordsCopy);
+        togglePasswordSlidable(false);
+        toast({
+            className: 'bg-blue-500 text-white',
+            title: 'Created new Password',
+            duration: 4500
+        });
     };
 
     const updatePasswordsState = (array) => {
         let passwordsCopy = [...array];
         setPasswords( passwordsCopy );
+        toggleEditState(false);
+        toast({
+            className: 'bg-blue-500 text-white',
+            title: 'Updated Password Successfully',
+            duration: 4500
+        });
     }
-
 
     async function handleStatusOfPassword(id) {
         // Assume changeStatusOfPasswordAction is defined elsewhere
@@ -355,7 +358,7 @@ export default function PasswordsTable() {
         <>   
             <Button onClick={ () => togglePasswordSlidable( true )}> Generate new Password </Button>    
             <Slideover state={ createPassword } action={ togglePasswordSlidable }>
-                  <PasswordForm updatePasswordsState={ updatePasswordsState } />
+                  <PasswordForm updatePasswordsState={ appendPasswordState } />
             </Slideover>
             <Table>
                 <TableCaption>A List of your used Passwords </TableCaption>
@@ -364,7 +367,8 @@ export default function PasswordsTable() {
                         <SortHeading sortKey="provider">Used In:</SortHeading>
                         <SortHeading sortKey="username">Username</SortHeading>
                         <TableHead> Password </TableHead>
-                        <SortHeading sortKey="dateModified">Last used</SortHeading>
+                        <SortHeading sortKey="dateModified">Last Modified 
+                        </SortHeading>
                         <SortHeading sortKey="status">Status</SortHeading>
                         <TableHead className="text-right"> Category </TableHead>
                         <TableHead className="text-right"> </TableHead>
@@ -386,7 +390,14 @@ export default function PasswordsTable() {
                             </TableCell>   
 
                             <TableCell>
-                               not implemented
+                                { each.lastUsed ? new Date(each.lastUsed).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                }) : ' Password not used' }
                             </TableCell>
 
                             <TableCell className="text-right">
@@ -411,7 +422,7 @@ export default function PasswordsTable() {
             </Table>
 
             <Slideover state={ editState } action={ toggleEditState } >
-                <PasswordForm updatePasswordsState={ appendPasswordState } edit={{ state: true, password: editObj } } />
+                <PasswordForm updatePasswordsState={ updatePasswordsState } edit={{ state: true, password: editObj } } />
             </Slideover>
         </>
     )
