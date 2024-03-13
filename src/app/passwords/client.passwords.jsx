@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { generateStrongPassword, checkPasswordStrength } from "./functions/funcs.passwordUtils"; 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast";
-
+import { decryptPhrase } from "@/services/crypto";
 
 // function PasswordInput ( ) {
 //     const [ reveal , toggleReveal ] = useState( false );
@@ -289,10 +289,12 @@ export default function PasswordsTable() {
     }
 
     async function copyPasswordToClipboard(password) {
-        await navigator.clipboard.writeText(password);
+       
+        let decrypted = decryptPhrase( password ); 
+        await navigator.clipboard.writeText( decrypted );
         toast({
             title: 'Clipboard',
-            description: `Copied password of ${password} to clipboard`,
+            description: `Copied password of ${ decrypted } to clipboard`,
             duration: 4500
         });
     }

@@ -1,6 +1,6 @@
 import prisma from '../../prisma/client';
-import bcrypt from 'bcrypt';
-const saltRounds = 10; // Adjust saltRounds as necessary..
+import { encryptPhrase } from '@/services/crypto';
+
 import { currentUser } from '@clerk/nextjs';
 
 // Retrieve all passwords
@@ -24,13 +24,14 @@ export async function getPasswordById(id) {
 
 // Create a new password
 export async function createPassword({ username, password, categoryIds, userId , associated }) {
+
   // encrypt password using bcrypt..
   // const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   const newPassword = await prisma.passwords.create({
     data: {
         username,
-        password,
+        password: encryptPhrase( password ),
         categoryIds,
         userId,
         associated
