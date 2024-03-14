@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-const cryptoSecretPass = 'process.env.CRYPTOPASS';
+const cryptoSecretPass = process.env.NEXT_PUBLIC_CRYPTOPASS;
 
 
 export const encryptPhrase =( message ) => {

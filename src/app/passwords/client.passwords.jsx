@@ -46,7 +46,6 @@ import { decryptPhrase } from "@/services/crypto";
 
 
 function Password( { isInEdit, oldPassword } ) {
-    const passwordInputRef = useRef(null);
     const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength.
     const [password, setPassword] = useState('');
     
@@ -73,20 +72,32 @@ function Password( { isInEdit, oldPassword } ) {
         console.log(strenghLength  )
         setGenerationOptionDisplay( true );
         let newPassword = generateStrongPassword(strenghLength );
-        passwordInputRef.current.value = newPassword;
+        setPassword( newPassword );
         handlesStrengthofPassword( newPassword );
     }
 
     // Define the bars with their minimum score for changing color
     const strengthBars = [
-        { id: 1, minScore: 1 },
-        { id: 2, minScore: 2 },
-        { id: 3, minScore: 4 }, // Adjusted score for the third bar
-        { id: 4, minScore: 6 }, // Adjusted score for the last bar
+        { id: 1, minScore: 1, text: 'Too short' },
+        { id: 2, minScore: 2, text: 'Good start'},
+        { id: 3, minScore: 4, text: 'Its strong, but could be stronger'}, // Adjusted score for the third bar
+        { id: 4, minScore: 6, text: 'Awesome Job.' }, // Adjusted score for the last bar
     ];
 
     // Tailwind color classes for different strength levels
     const strengthColors = ["bg-gray-300", "bg-red-600", "bg-red-500", "bg-green-300", "bg-green-500"];
+
+    const getCurrentStrengthText = () => {
+        let currentText = ''; // Default text
+        for (let i = strengthBars.length - 1; i >= 0; i--) {
+            if (passwordStrength >= strengthBars[i].minScore) {
+                currentText = strengthBars[i].text;
+                break; // Stop loop once the correct strength level is found
+            }
+        }
+        return currentText;
+    };
+
 
     useEffect( ( ) => {
         if ( isInEdit && oldPassword ) {
@@ -99,7 +110,7 @@ function Password( { isInEdit, oldPassword } ) {
         <>
             <div className="flex my-2 items-center flex-row">
                 <div className="p-2 border border-gray-300 flex-grow flex flex-row items-center">
-                    <input className="p-2 border-none" type="string" name="password" placeholder="password" ref={passwordInputRef}
+                    <input className="p-2 border-none" type="string" name="password" placeholder="password" 
                     onChange={handleInputChange} value={ password }
                     />
                     <p className="mx-4 cursor-pointer"> Reveal </p>
@@ -113,13 +124,13 @@ function Password( { isInEdit, oldPassword } ) {
             { generationOptionsDisplay && (
                 <Card>
                 <CardHeader>
-                  <CardTitle> { edit.state ? ' Edit Password' : 'Add a password' } </CardTitle>
+                  <CardTitle> { isInEdit ? ' Edit Password' : 'Add a password' } </CardTitle>
                   <CardDescription> generate a password that includes lower case, uppercase, special characters and numbers. </CardDescription>
                 </CardHeader>
                 <CardContent>
                    <div> Length { `(${ OptionpasswordStrength})`} </div>
                     <Slider
-                        min={8}
+                        min={1}
                         max={30}
                         step={1}
                         value={ OptionpasswordStrength }
@@ -141,6 +152,9 @@ function Password( { isInEdit, oldPassword } ) {
                 {strengthBars.map((bar) => (
                     <div key={bar.id} className={`w-1/4 h-2 mx-1 ${passwordStrength >= bar.minScore ? strengthColors[bar.id] : 'bg-gray-300'}`}></div>
                 ))}
+            </div>
+            <div className="mt-2 text-center font-bold">
+                 { getCurrentStrengthText() }
             </div>
         </>
     );
