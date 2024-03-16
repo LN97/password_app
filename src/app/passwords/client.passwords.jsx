@@ -10,39 +10,7 @@ import { generateStrongPassword, checkPasswordStrength } from "./functions/funcs
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast";
 import { decryptPhrase } from "@/services/crypto";
-
-// function PasswordInput ( ) {
-//     const [ reveal , toggleReveal ] = useState( false );
-//     function handleInputChange(e) {
-//         let inputVal = e.target.value;
-//         handlesStrengthofPassword( inputVal );
-//     }
-//     return (
-//         <div className="p-2 border border-gray-300 flex-grow flex flex-row items-center">
-//             <input className="p-2 border-none" type={ reveal ? 'text' : 'password'} name="password" placeholder="password" ref={passwordInputRef}
-//              onChange={handleInputChange} 
-//             />
-//             <p className="mx-4 cursor-pointer"> Reveal </p>
-//         </div>
-//     )
-// }
-  
-// added
-
-// // primitve ( can copy i believe ... )
-// let number = 5;
-// let secondNum = number;
-// secondNum + 5;
-
-// // object reference ( keeps reference to obj last assigned to ... )
-// let obj1 = { 
-//     name: 'brad'
-// }
-
-// let obj2 = obj1.name;
-// obj2.name = 'simon';
-
-// convert react inputs from grabbing the value to using state so that we can change the state when in edit mode.
+import CSVImportComponent from "./cvsUpload";
 
 
 function Password( { isInEdit, oldPassword } ) {
@@ -228,12 +196,14 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
        
     }, [ edit.state ]);
 
+    const passwordText = edit.state ? decryptPhrase( edit.password.password ) : '';
+
     return (
         <>
             <form onSubmit={handleSubmit }>
                 { edit.state ? 'Edit the Password' : 'Create new Password'}
                 <Input value={ formData.username } className="my-2" type="text" name="username"    placeholder={'username'} onChange={handleFormUpdate} />
-                <Password isInEdit={ edit.state } oldPassword={ edit.state ? edit.password.password : ''  }/>
+                <Password isInEdit={ edit.state } oldPassword={ passwordText } />
                 <Input value={ formData.websiteName } className="my-2" type="text" name="websiteName" placeholder={'website name'} onChange={handleFormUpdate} />
                 <Input value={ formData.websiteUrl } className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} onChange={handleFormUpdate} />
                 
@@ -273,10 +243,14 @@ export default function PasswordsTable() {
 
     const { toast } = useToast();
 
+    const updatePasswordsFromNewArray = ( passwords ) => {
+        setPasswords( passwords );
+    }
+
     const appendPasswordState = (state) => {
         let passwordsCopy = [...passwords];
         passwordsCopy.push(state);
-        setPasswords(passwordsCopy);
+        updatePasswordsFromNewArray(passwordsCopy);
         togglePasswordSlidable(false);
         toast({
             className: 'bg-blue-500 text-white',
@@ -287,7 +261,7 @@ export default function PasswordsTable() {
 
     const updatePasswordsState = (array) => {
         let passwordsCopy = [...array];
-        setPasswords( passwordsCopy );
+        setPasswupdatePasswordsFromNewArrayords( passwordsCopy );
         toggleEditState(false);
         toast({
             className: 'bg-blue-500 text-white',
@@ -376,6 +350,7 @@ export default function PasswordsTable() {
             <Slideover state={ createPassword } action={ togglePasswordSlidable }>
                   <PasswordForm updatePasswordsState={ appendPasswordState } />
             </Slideover>
+            <CSVImportComponent updatePasswords={ updatePasswordsFromNewArray } />
             <Table>
                 <TableCaption>A List of your used Passwords </TableCaption>
                 <TableHeader>

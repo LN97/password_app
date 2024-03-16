@@ -41,6 +41,45 @@ export async function createPassword({ username, password, categoryIds, userId ,
 }
 
 
+export async function createPasswords(passwords) {
+  try {
+    // Attempt to retrieve the current user's ID
+    const { id: userId } = await currentUser();
+
+    // we're still looping the passwords array, but 
+    let promises = passwords.map(({ websiteName, websiteUrl, username, password }) => {
+
+      // Create and return the promise for the insert operation
+      return prisma.passwords.create({
+        data: {
+          username,
+          password: encryptPhrase( password ),
+          associated: {
+            websiteName,
+            websiteUrl,
+          },
+          categoryIds: [], // Adjust based on your logic or application needs
+          userId // Use the fetched user ID
+        },
+      });
+    });
+
+    // Wait for all the insert operations to complete
+    const results = await Promise.all(promises.map(p => p.catch(e => e)));
+
+    // Optionally, filter out errors if any operation failed, based on your needs
+    const successfulResults = results.filter(result => !(result instanceof Error));
+
+    return await getAllPasswordsByUserId( );
+  } 
+  catch (error) {
+    console.error('An error occurred:', error);
+    // Handle or throw the error as appropriate for your application context
+    throw new Error('Failed to create passwords.');
+  }
+}
+
+
 // Update a password by ID
 export async function updatePasswordById(id, data) {
    await prisma.passwords.update({

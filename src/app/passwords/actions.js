@@ -1,5 +1,5 @@
 'use server'
-import { getAllPasswordsByUserId, createPassword, updatePasswordById, deletePasswordById, togglePasswordStatus } from '../../db_queries/query.passwords';
+import { getAllPasswordsByUserId, createPassword, createPasswords, updatePasswordById, deletePasswordById, togglePasswordStatus } from '../../db_queries/query.passwords';
 import { currentUser } from '@clerk/nextjs';
 
 export async function fetchpasswords ( ) {
@@ -8,6 +8,15 @@ export async function fetchpasswords ( ) {
     if ( !id ) return;
     const passwords = await getAllPasswordsByUserId( );
     return passwords;
+}
+
+export async function AddPasswordsViaCSV ( passwords ) {
+    // get current logged userId.
+    const { id } = await currentUser();
+    if ( !id ) return;
+
+    let createdPasswords = await createPasswords( passwords );
+    return createdPasswords;
 }
 
 export async function addPassword ( categories, formData ) {
