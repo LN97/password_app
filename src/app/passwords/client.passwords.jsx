@@ -11,8 +11,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { decryptPhrase } from "@/services/crypto";
 import CSVImportComponent from "./cvsUpload";
+import { buttonVariants } from "@/components/ui/button"
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
 
+  
 function Password( { isInEdit, oldPassword } ) {
     const [passwordStrength, setPasswordStrength] = useState(0); // State to hold password strength.
     const [password, setPassword] = useState('');
@@ -129,7 +142,39 @@ function Password( { isInEdit, oldPassword } ) {
 }
 
 
-function PasswordForm ( { updatePasswordsState , edit = { state: false , password: null } } ) {
+function DeletePasswordComponent ( { passwordId, updatePasswordsState }) {
+
+    async function deletePasswordEvent ( ) {
+        let passwords = await deletePasswordUserAction( passwordId );
+        updatePasswordsState( passwords );
+    }
+
+    return (
+        <>
+            <AlertDialog>
+                <AlertDialogTrigger>
+                <div className={`mx-4 ${buttonVariants({ variant: "destructive" }) }`} variant="destructive"> delete </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure you?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your account
+                        and remove your data from our servers.
+                        { passwordId }
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={ () => deletePasswordEvent() }> Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    )
+}
+
+function PasswordForm ( { updatePasswordsState , edit = { state: false , credential: null } } ) {
     const [ categoryDisplay , setCategoryDisplay ] = useState( false );
     const [ formData , setFormData ] = useState( {  username: '', websiteUrl: '', websiteName: '' });
 
@@ -139,11 +184,6 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
 
     const [ newCategoryState , setNewCategory ] = useState('');
 
-    async function deletePassword(id) {
-        // Assume deletePasswordUserAction is defined elsewhere
-        let passwords = await deletePasswordUserAction(id);
-        changePasswords(passwords);
-    }
 
     const addToCategories = ( ) => {
         // deep copying vs shallow copying in js.
@@ -161,7 +201,7 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
         console.log( edit.state );
         try {
             if ( edit.state ) {
-                    const passwordsUpdated = await updatePasswordRecord( edit.password.id, categories, formProps );
+                    const passwordsUpdated = await updatePasswordRecord( edit.credential.id, categories, formProps );
                     console.log('Form submission response:', passwordsUpdated );
                     updatePasswordsState( passwordsUpdated );
         } else {
@@ -183,33 +223,31 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
     }
 
     const populateFormFieldsOnUpdate = ( ) => {
-        let { username , associated } = edit.password;
+        let { username , associated } = edit.credential;
         let { websiteName , websiteUrl } = associated;
-        setFormData({ username, websiteUrl, websiteName })
+        setFormData({ username, websiteUrl, websiteName });
     }
 
     useEffect( ( ) => {
         if ( edit.state ) {
-             console.log( edit.password );
+             console.log( edit.credential );
              populateFormFieldsOnUpdate();
         }
        
     }, [ edit.state ]);
-
-    const passwordText = edit.state ? decryptPhrase( edit.password.password ) : '';
 
     return (
         <>
             <form onSubmit={handleSubmit }>
                 { edit.state ? 'Edit the Password' : 'Create new Password'}
                 <Input value={ formData.username } className="my-2" type="text" name="username"    placeholder={'username'} onChange={handleFormUpdate} />
-                <Password isInEdit={ edit.state } oldPassword={ passwordText } />
+                <Password isInEdit={ edit.state } oldPassword={  edit.state ? decryptPhrase( edit.credential.password ) : '' } />
                 <Input value={ formData.websiteName } className="my-2" type="text" name="websiteName" placeholder={'website name'} onChange={handleFormUpdate} />
                 <Input value={ formData.websiteUrl } className="my-2" type="text" name="websiteUrl"  placeholder={'website url'} onChange={handleFormUpdate} />
                 
 
-                { categories.map( ( category ) => 
-                    <Button variant="outline"> { category } </Button>
+                { categories.map( ( category , index ) => 
+                    <Button key={ index } variant="outline"> { category } </Button>
                 )}
                 { categoryDisplay ? (
                     <>
@@ -221,10 +259,12 @@ function PasswordForm ( { updatePasswordsState , edit = { state: false , passwor
                 )}
                 <div onClick={ () => setCategoryDisplay( !categoryDisplay )}> Add a collection </div>
                 <Button type="submit">Submit</Button>
+                { edit.state ? <DeletePasswordComponent passwordId={ edit.credential.id } updatePasswordsState={ updatePasswordsState } /> : '' }
             </form>
         </>
     )
 }
+
 
 
 export default function PasswordsTable() {
@@ -261,7 +301,7 @@ export default function PasswordsTable() {
 
     const updatePasswordsState = (array) => {
         let passwordsCopy = [...array];
-        setPasswupdatePasswordsFromNewArrayords( passwordsCopy );
+        updatePasswordsFromNewArray(passwordsCopy);
         toggleEditState(false);
         toast({
             className: 'bg-blue-500 text-white',
@@ -397,9 +437,17 @@ export default function PasswordsTable() {
                             </TableCell>
                             
                             <TableCell className="text-right">
-                                { each.categoryIds.map( ( category , index ) => 
-                                    <Button key={ index } variant="outline"> { category } </Button>
-                                )}
+                                { each.categoryIds.length > 0 ? (
+                                    <>  
+                                        { each.categoryIds.map( ( category , index ) => 
+                                            <Button key={ index } variant="outline"> { category } </Button>
+                                        )}
+                                    </>  
+                                ) : (
+                                    <>
+                                        not categorised
+                                    </>
+                                ) }
                             </TableCell>
 
                             <TableCell className="text-right" onClick={ ( ) => {
@@ -413,7 +461,7 @@ export default function PasswordsTable() {
             </Table>
 
             <Slideover state={ editState } action={ toggleEditState } >
-                <PasswordForm updatePasswordsState={ updatePasswordsState } edit={{ state: true, password: editObj } } />
+                <PasswordForm updatePasswordsState={ updatePasswordsState } edit={{ state: true, credential: editObj } } />
             </Slideover>
         </>
     )

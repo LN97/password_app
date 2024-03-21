@@ -2,10 +2,14 @@ import React, { useState, useCallback } from 'react';
 import { Importer, ImporterField } from 'react-csv-importer';
 import { AddPasswordsViaCSV } from './actions';
 import { useToast } from "@/components/ui/use-toast";
+import Slideover from "@/components/tailwind/slideOver";
 import 'react-csv-importer/dist/index.css';
+import { Button } from '@/components/ui/button';
+
 
 export default function CSVImportComponent ({ updatePasswords }) {
   const [csvData, setCsvData] = useState([]);
+  const [sliderState, updateSlider ] = useState( false );
 
   const { toast } = useToast();
 
@@ -24,18 +28,24 @@ export default function CSVImportComponent ({ updatePasswords }) {
       title: 'Passwords imported and saved successfully!',
       duration: 4500
   });
+  updateSlider( false );
   }, [csvData]);
 
 
   return (
-    <div>
-      <h1>Upload and Parse CSV File</h1>
-      <Importer processChunk={processChunk} onComplete={handleComplete}>
-        <ImporterField name="username" label="Username" />
-        <ImporterField name="password" label="Password" />
-        <ImporterField name="websiteName" label="title" />
-        <ImporterField name="websiteUrl" label="url" />
-      </Importer>
-    </div>
+    <>     
+       <Button className="ml-3" onClick={ ( ) => updateSlider( !sliderState )}> 
+          upload
+       </Button>
+    
+       <Slideover state={ sliderState } action={ updateSlider }>
+        <Importer processChunk={processChunk} onComplete={handleComplete}>
+          <ImporterField name="username" label="Username" />
+          <ImporterField name="password" label="Password" />
+          <ImporterField name="websiteName" label="title" />
+          <ImporterField name="websiteUrl" label="url" />
+        </Importer>    
+       </Slideover>
+    </>
   );
 };

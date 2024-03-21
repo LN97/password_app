@@ -14,3 +14,4 @@ export const decryptPhrase = ( encrypted ) => {
         console.log( encrypted, originalText, cryptoSecretPass );
         return originalText;
 }
+

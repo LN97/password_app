@@ -1,6 +1,7 @@
 'use server'
 import { getAllPasswordsByUserId, createPassword, createPasswords, updatePasswordById, deletePasswordById, togglePasswordStatus } from '../../db_queries/query.passwords';
 import { currentUser } from '@clerk/nextjs';
+import { encryptPhrase } from '@/services/crypto';
 
 export async function fetchpasswords ( ) {
     // get current logged userId.
@@ -56,7 +57,7 @@ export async function updatePasswordRecord( passwordId, categories, formData ) {
                 websiteName: websiteName , websiteUrl
             },
             username,
-            password,
+            password: encryptPhrase( password ) ,
             categoryIds: categories,
         });
     
