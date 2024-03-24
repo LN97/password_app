@@ -32,8 +32,10 @@ import Link from 'next/link';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, current: true },
-  { name: 'Passwords', href: '/passwords', icon: UsersIcon, current: false }
+  { name: 'Passwords', href: '/passwords', icon: UsersIcon, current: false },
+  { name: 'About the project' , href: '/about', icon: UsersIcon, current: false }
 ]
+
 const teams = [
 ]
 
