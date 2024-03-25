@@ -25,11 +25,11 @@ nextJs
     * creating and using api endoints built within the pages/api folder (how you interact with your db and server functions )
 
 what else to learn
- * [x] we need to implement a db.
- * [x] we need to setup the prisma orm.
- * [x] we need to add shadcn component library.
- * [x] we need to add and go through clerk authentication.
- * [] we need to look at clerk page authorisation. 
+ * [x] need to implement a db.
+ * [x] need to setup the prisma orm.
+ * [x] need to add shadcn component library.
+ * [x] need to add and go through clerk authentication.
+ * [x] need to look at clerk page authorisation. 
 
  ## setup
 
