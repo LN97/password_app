@@ -6,7 +6,7 @@
   // tailwind.config.js
   module.exports = {
     // ...
-    plugins: [
+    plugins: [gfh
       // ...
       require('@tailwindcss/forms'),
     ],
