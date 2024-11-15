@@ -94,7 +94,7 @@ function Password( { isInEdit, oldPassword } ) {
                     <input className="p-2 border-none" type="string" name="password" placeholder="password" 
                     onChange={handleInputChange} value={ password }
                     />
-                    <p className="mx-4 cursor-pointer"> Reveal </p>
+                    <p className="mx-4 cursor-pointer">  </p>
                 </div>
               
                 <div onClick={() => handlePasswordGeneration( OptionpasswordStrength ) } className="ml-2 py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer">

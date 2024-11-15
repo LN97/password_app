@@ -38,7 +38,7 @@ export default function CSVImportComponent ({ updatePasswords }) {
           upload
        </Button>
     
-       <Slideover state={ sliderState } action={ updateSlider }>
+       <Slideover className="w-screen"  state={ sliderState } action={ updateSlider }>
         <Importer processChunk={processChunk} onComplete={handleComplete}>
           <ImporterField name="username" label="Username" />
           <ImporterField name="password" label="Password" />
